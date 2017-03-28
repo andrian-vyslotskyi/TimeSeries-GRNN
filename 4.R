@@ -17,7 +17,7 @@ grnn <- function(trainWithResults, x, windowSize, sigma = 0.01) {
   y
 }
 
-generateTimeSeries <- function(f = "sin", end = 5 , step = 0.1) {
+generateTimeSeries <- function(f = "sin", end = 3 , step = 0.1) {
   x <- seq(0, end, by=step)
   if(f == "sin") y <- sin(2*pi*x)
   if(f == "cos") y <- cos(2*pi*x)
@@ -34,7 +34,7 @@ for(i in seq(2, length(timeSeries) - windowSize, 1) ) {
   input_data[nrow(input_data)+1,] <- timeSeries[i:(i+windowSize)]
 }
 
-firstPredictIndex <- 28
+firstPredictIndex <- 20
 train <- input_data[1:firstPredictIndex-1,]
 test <- input_data[firstPredictIndex:nrow(input_data),]
 
@@ -44,6 +44,10 @@ for(i in seq(1, nrow(test), 1) ) {
   x_next <- grnn(train, new_input, windowSize)
   result[i + 1,] <- c( as.numeric( new_input ), x_next)
 }
-result
+
+test["Predicted value"] <- result[-1,windowSize+1]
+colnames(test)[windowSize + 1] <- "Value"
+
+test
 
 #series.size - window == number of rows in new data

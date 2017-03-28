@@ -3,29 +3,31 @@ library(shiny)
 shinyUI(fluidPage(
   
   # Application title
-  titlePanel("GRNN"),
+  titlePanel("Time series GRNN"),
   
   # Sidebar with a slider input for number of bins 
   sidebarLayout(
     sidebarPanel(
-      numericInput("n",
-                   "Number of records:",
-                   min = 1,
-                   max = 100000,
-                   value = 10),
-      numericInput("train_coef",
-                   "Train coeficient (train/records ration)",
-                   min = 0,
-                   max = 1,
-                   value = 0.75,
-                   step = 0.1),
-      numericInput("sigma",
-                   "Sigma",
-                   value = 0.1,
-                   step = 0.1),
-      numericInput("seed",
-                   "Pseudo random generator seed",
-                   value = 101)
+      numericInput("windowSize",
+                   "Window size:",
+                   min = 3,
+                   value = 3),
+      numericInput("end",
+                   "Last x:",
+                   min = 0.1,
+                   value = 5),
+      numericInput("step",
+                   "Generation step:",
+                   min = 0.01,
+                   value = 0.1),
+      selectInput("func",
+                  "Function",
+                  choices = list("sin(2*Pi*x)" = "sin", "cos(2*Pi*x)" = "cos"),
+                  selected = "sin"),
+      numericInput("firstPredictIndex",
+                   "First predict index",
+                   value = 41,
+                   step = 1)
     ),
     
     mainPanel(

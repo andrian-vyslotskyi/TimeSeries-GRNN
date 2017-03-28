@@ -9,9 +9,9 @@ calcD <- function(r, sigma = 1) {
 
 calcY <- function(d, y) sum(d*y)/sum(d)
 
-grnn <- function(trainWithResults, x, sigma = 1) {
-  train <- trainWithResults[, 1:2]
-  y_train <- trainWithResults[,3]
+grnn <- function(trainWithResults, x, windowSize, sigma = 0.1) {
+  train <- trainWithResults[,1:windowSize]
+  y_train <- trainWithResults[,windowSize+1]
   
   r <- calcR(train, x)
   d <- calcD(r, sigma)
@@ -19,30 +19,38 @@ grnn <- function(trainWithResults, x, sigma = 1) {
   y
 }
 
-generateInputData <- function(n) {
-  x1 <- runif(n, -1, 1)
-  x2 <- runif(n, -1, 1)
-  y <- (1-x1^2)+2*(1-x2)^2
-  x <- data.frame(v1=x1, v2=x2, v3=y)
+generateTimeSeries <- function(f = "sin", end = 5 , step = 0.1) {
+  x <- seq(0, end, by=step)
+  if(f == "sin") y <- sin(2*pi*x)
+  if(f == "cos") y <- cos(2*pi*x)
+  y
 }
 
 shinyServer(function(input, output) {
-   
+  
   output$table <- renderTable({
-    set.seed(input$seed)
+    timeSeries <- generateTimeSeries(f = input$func, end = input$end, step = input$step)
     
-    input_data <- generateInputData(input$n)
+    input_data <- as.data.frame(t(timeSeries[0: input$windowSize + 1]) )
     
-    smp_size <- floor(input$train_coef * nrow(input_data))
-    train_ind <- sample(seq_len(nrow(input_data)), size = smp_size)
+    for(i in seq(2, length(timeSeries) - input$windowSize, 1) ) {
+      input_data[nrow(input_data)+1,] <- timeSeries[i: (i + input$windowSize) ]
+    }
     
-    train <- input_data[train_ind, ]
-    test <- input_data[-train_ind, ]
+    train <- input_data[1: input$firstPredictIndex - 1,]
+    test <- input_data[input$firstPredictIndex: nrow(input_data),]
     
-    result <- apply(test, 1, function(x) grnn(train, as.numeric(x[1:2]), input$sigma) )
+    result <- train[input$firstPredictIndex - 1,]
+    for(i in seq(1, nrow(test), 1) ) {
+      new_input <- result[i, 2:ncol(result)]
+      x_next <- grnn(train, new_input, input$windowSize)
+      result[i + 1,] <- c( as.numeric( new_input ), x_next)
+    }
     
-    colnames(test) <- c("x1", "x2", "y")
-    test["y_r"] = result
+    test["Predicted value"] <- result[-1, input$windowSize + 1]
+    colnames(test)[input$windowSize + 1] <- "Value"
+    
+    # print(test)
     test
   })
   
