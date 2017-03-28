@@ -43,7 +43,7 @@ shinyServer(function(input, output) {
     result <- train[input$firstPredictIndex - 1,]
     for(i in seq(1, nrow(test), 1) ) {
       new_input <- result[i, 2:ncol(result)]
-      x_next <- grnn(train, new_input, input$windowSize)
+      x_next <- grnn(train, new_input, input$windowSize, input$sigma)
       result[i + 1,] <- c( as.numeric( new_input ), x_next)
     }
     
