@@ -7,7 +7,7 @@ calcD <- function(r, sigma = 1) {
 
 calcY <- function(d, y) sum(d*y)/sum(d)
 
-grnn <- function(trainWithResults, x, windowSize, sigma = 0.1) {
+grnn <- function(trainWithResults, x, windowSize, sigma = 0.01) {
   train <- trainWithResults[,1:windowSize]
   y_train <- trainWithResults[,windowSize+1]
   
@@ -28,22 +28,22 @@ windowSize <- 3
 
 timeSeries <- generateTimeSeries()
 
-input <- as.data.frame(t(timeSeries[0:windowSize+1]))
+input_data <- as.data.frame(t(timeSeries[0:windowSize+1]))
 
 for(i in seq(2, length(timeSeries) - windowSize, 1) ) {
-  input[nrow(input)+1,] <- timeSeries[i:(i+windowSize)]
+  input_data[nrow(input_data)+1,] <- timeSeries[i:(i+windowSize)]
 }
-input
 
-firstPredictIndex <- 30
-train <- input[1:firstPredictIndex-1,]
-test <- input[firstPredictIndex:nrow(input),]
+firstPredictIndex <- 28
+train <- input_data[1:firstPredictIndex-1,]
+test <- input_data[firstPredictIndex:nrow(input_data),]
 
-results <- apply(test, 1, function(testRow){
-  y <- grnn(train, testRow[1:windowSize], windowSize)
-  train[nrow(train)+1,] <- c(testRow, y)
-  y
-})
-test["y_r"] <- results
-#r <- grnn(train, test[1,1:windowSize], windowSize)
+result <- train[firstPredictIndex - 1,]
+for(i in seq(1, nrow(test), 1) ) {
+  new_input <- result[i, 2:ncol(result)]
+  x_next <- grnn(train, new_input, windowSize)
+  result[i + 1,] <- c( as.numeric( new_input ), x_next)
+}
+result
+
 #series.size - window == number of rows in new data
